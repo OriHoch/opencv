@@ -1,19 +1,34 @@
+# The name of the workflow, displayed on GitHub Actions UI
 name: trigger Incredibuild
+# This workflow will be triggered on every Git push event to your repository
 on: push
+# Every workflow can have multiple jobs which will all run in parallel by default
 jobs:
+  # The name of our build job, displayed on GitHub Actions UI
   build:
+    # The OS image to use for this job
     runs-on: ubuntu-18.04
+    # Every job has a series of steps which run sequentially. If any step fails the entire job stops and is marked as a failure.
     steps:
+    # This is the script which runs on this step. The pipe character ("|") is used to start a yaml multiline string which contains our build script
     - run: |
-        cd `mktemp -d` &&\
+        # Get the private key from the repository secrets and store in a local file.
         echo "${{ secrets.IB_SSH_PRIVATE_KEY }}" > ib_ssh_private_key &&\
+        # Restrict the file permissions, this is required by the ssh client.
         chmod 400 ib_ssh_private_key &&\
+        # We specify a unique name for the build directory which will be used inside the incredibuild-coordinator server.
+        # This allows us to retrieve the build when done and to debug errors.
         BUILD_DIR=opencv-${GITHUB_SHA}-`date +%Y%m%d%H%M%S` &&\
+        # Start a non-interactive SSH session to the incredibuild-coordinator server
         ssh -i `pwd`/ib_ssh_private_key -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@${{ secrets.IB_SSH_IP }} "
           echo BUILD_DIR: $BUILD_DIR &&\
           mkdir $BUILD_DIR && cd $BUILD_DIR &&\
+          # Download the relevant code. GITHUB_REPOSITORY and GITHUB_SHA are probvided by the GitHub Actions build system and
+          # contain the repository name and relevant commit sha for current build
           curl -Lso opencv.zip https://github.com/${GITHUB_REPOSITORY}/archive/${GITHUB_SHA}.zip &&\
           unzip opencv.zip && cd opencv-${GITHUB_SHA} &&\
+          # standard build script, same one we used in previous blog post to build the opencv project
+          # this will initiate 20 parallel processes distributed via the incredibuild-coordinator to the agents
           mkdir build && cd build &&\
           cmake .. &&\
           ib_console make -j 20 &&\
