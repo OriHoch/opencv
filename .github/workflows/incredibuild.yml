@@ -1,0 +1,9 @@
+name: trigger Incredibuild
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+      .github/trigger_incredibuild.sh
