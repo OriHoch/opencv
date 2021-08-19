@@ -4,6 +4,12 @@ jobs:
   build:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
     - run: |
-      .github/trigger_incredibuild.sh
+        cd `mktemp -d` &&\
+        echo "${{ secrets.IB_SSH_PRIVATE_KEY }}" > ib_ssh_private_key &&\
+        chmod 400 ib_ssh_private_key &&\
+        ssh -i `pwd`/ib_ssh_private_key -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@${{ secrets.IB_SSH_IP }} "
+          ls -lah &&\
+          pwd &&\
+          echo Hello World!
+        "
