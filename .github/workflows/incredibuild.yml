@@ -8,12 +8,15 @@ jobs:
         cd `mktemp -d` &&\
         echo "${{ secrets.IB_SSH_PRIVATE_KEY }}" > ib_ssh_private_key &&\
         chmod 400 ib_ssh_private_key &&\
+        BUILD_DIR=opencv-${GITHUB_SHA}-`date +%Y%m%d%H%M%S` &&\
         ssh -i `pwd`/ib_ssh_private_key -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@${{ secrets.IB_SSH_IP }} "
-          mkdir opencv-${GITHUB_SHA} && cd opencv-${GITHUB_SHA} &&\
-          curl -Lso opencv.zip https://github.com/${{ github.repository.name }}/archive/${GITHUB_SHA}.zip &&\
+          echo BUILD_DIR: $BUILD_DIR &&\
+          mkdir $BUILD_DIR && cd $BUILD_DIR &&\
+          curl -Lso opencv.zip https://github.com/${GITHUB_REPOSITORY}/archive/${GITHUB_SHA}.zip &&\
           unzip opencv.zip && cd opencv-${GITHUB_SHA} &&\
           mkdir build && cd build &&\
           cmake .. &&\
           ib_console make -j 20 &&\
-          cd && rm -rf opencv-${GITHUB_SHA}
+          echo Great Success! &&\
+          echo BUILD_DIR: $BUILD_DIR
         "
